@@ -13,7 +13,7 @@ interface MessageListProps {
 export function MessageList({ messages, isLoading }: MessageListProps) {
   if (messages.length === 0) {
     return (
-      <div className="flex flex-col items-center justify-center h-full px-4 text-center">
+      <div className="flex flex-col items-center justify-center min-h-full px-4 text-center">
         <div className="flex items-center justify-center w-14 h-14 rounded-2xl bg-blue-50 mb-4 shadow-sm">
           <Bot className="h-7 w-7 text-blue-600" />
         </div>
@@ -76,17 +76,56 @@ export function MessageList({ messages, isLoading }: MessageListProps) {
                             );
                           case "tool-invocation":
                             const tool = part.toolInvocation;
+                            const getToolDisplayName = (toolName: string, args: any) => {
+                              switch (toolName) {
+                                case "str_replace_editor":
+                                  if (args?.path) {
+                                    const command = args.command;
+                                    const fileName = args.path.split('/').pop();
+                                    switch (command) {
+                                      case "create":
+                                        return `Creating ${fileName}`;
+                                      case "str_replace":
+                                        return `Updating ${fileName}`;
+                                      case "view":
+                                        return `Reading ${fileName}`;
+                                      case "insert":
+                                        return `Editing ${fileName}`;
+                                      default:
+                                        return `Working on ${fileName}`;
+                                    }
+                                  }
+                                  return "Creating file";
+                                case "file_manager":
+                                  if (args?.path) {
+                                    const fileName = args.path.split('/').pop();
+                                    const command = args.command;
+                                    switch (command) {
+                                      case "rename":
+                                        const newFileName = args.new_path?.split('/').pop();
+                                        return `Renaming ${fileName} to ${newFileName}`;
+                                      case "delete":
+                                        return `Deleting ${fileName}`;
+                                      default:
+                                        return `Managing ${fileName}`;
+                                    }
+                                  }
+                                  return "Managing files";
+                                default:
+                                  return toolName;
+                              }
+                            };
                             return (
-                              <div key={partIndex} className="inline-flex items-center gap-2 mt-2 px-3 py-1.5 bg-neutral-50 rounded-lg text-xs font-mono border border-neutral-200">
+                              <div key={partIndex} className="inline-flex items-center gap-2 mt-2 px-3 py-1.5 bg-neutral-50 rounded-lg text-xs border border-neutral-200">
                                 {tool.state === "result" && tool.result ? (
                                   <>
                                     <div className="w-2 h-2 rounded-full bg-emerald-500"></div>
-                                    <span className="text-neutral-700">{tool.toolName}</span>
+                                    <span className="text-neutral-700">{getToolDisplayName(tool.toolName, tool.args)}</span>
                                   </>
                                 ) : (
                                   <>
                                     <Loader2 className="w-3 h-3 animate-spin text-blue-600" />
-                                    <span className="text-neutral-700">{tool.toolName}</span>
+                                    <span className="text-neutral-700">{getToolDisplayName(tool.toolName, tool.args)}</span>
                                   </>
                                 )}
                               </div>
